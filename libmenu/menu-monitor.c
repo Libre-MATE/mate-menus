@@ -21,7 +21,9 @@
  * Boston, MA 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include "menu-monitor.h"
 
@@ -30,68 +32,64 @@
 #include "menu-util.h"
 
 struct MenuMonitor {
-	char* path;
-	guint refcount;
+  char* path;
+  guint refcount;
 
-	GSList* notifies;
+  GSList* notifies;
 
-	GFileMonitor* monitor;
+  GFileMonitor* monitor;
 
-	guint is_directory: 1;
+  guint is_directory : 1;
 };
 
 typedef struct {
-	MenuMonitor* monitor;
-	MenuMonitorEvent event;
-	char* path;
+  MenuMonitor* monitor;
+  MenuMonitorEvent event;
+  char* path;
 } MenuMonitorEventInfo;
 
 typedef struct {
-	MenuMonitorNotifyFunc notify_func;
-	gpointer user_data;
-	guint refcount;
+  MenuMonitorNotifyFunc notify_func;
+  gpointer user_data;
+  guint refcount;
 } MenuMonitorNotify;
 
-static MenuMonitorNotify* mate_menu_monitor_notify_ref(MenuMonitorNotify* notify);
+static MenuMonitorNotify* mate_menu_monitor_notify_ref(
+    MenuMonitorNotify* notify);
 static void mate_menu_monitor_notify_unref(MenuMonitorNotify* notify);
 
 static GHashTable* monitors_registry = NULL;
 static guint events_idle_handler = 0;
 static GSList* pending_events = NULL;
 
-static void invoke_notifies(MenuMonitor* monitor, MenuMonitorEvent  event, const char* path)
-{
-  GSList *copy;
-  GSList *tmp;
+static void invoke_notifies(MenuMonitor* monitor, MenuMonitorEvent event,
+                            const char* path) {
+  GSList* copy;
+  GSList* tmp;
 
-  copy = g_slist_copy (monitor->notifies);
-  g_slist_foreach (copy,
-		   (GFunc) mate_menu_monitor_notify_ref,
-		   NULL);
+  copy = g_slist_copy(monitor->notifies);
+  g_slist_foreach(copy, (GFunc)mate_menu_monitor_notify_ref, NULL);
 
   tmp = copy;
-  while (tmp != NULL)
-    {
-      MenuMonitorNotify *notify = tmp->data;
-      GSList            *next   = tmp->next;
+  while (tmp != NULL) {
+    MenuMonitorNotify* notify = tmp->data;
+    GSList* next = tmp->next;
 
-      if (notify->notify_func)
-	{
-	  notify->notify_func (monitor, event, path, notify->user_data);
-	}
-
-      mate_menu_monitor_notify_unref(notify);
-
-      tmp = next;
+    if (notify->notify_func) {
+      notify->notify_func(monitor, event, path, notify->user_data);
     }
 
-  g_slist_free (copy);
+    mate_menu_monitor_notify_unref(notify);
+
+    tmp = next;
+  }
+
+  g_slist_free(copy);
 }
 
-static gboolean emit_events_in_idle(void)
-{
-  GSList *events_to_emit;
-  GSList *tmp;
+static gboolean emit_events_in_idle(void) {
+  GSList* events_to_emit;
+  GSList* tmp;
 
   events_to_emit = pending_events;
 
@@ -99,68 +97,59 @@ static gboolean emit_events_in_idle(void)
   events_idle_handler = 0;
 
   tmp = events_to_emit;
-  while (tmp != NULL)
-    {
-      MenuMonitorEventInfo *event_info = tmp->data;
+  while (tmp != NULL) {
+    MenuMonitorEventInfo* event_info = tmp->data;
 
-      mate_menu_monitor_ref(event_info->monitor);
+    mate_menu_monitor_ref(event_info->monitor);
 
-      tmp = tmp->next;
-    }
+    tmp = tmp->next;
+  }
 
   tmp = events_to_emit;
-  while (tmp != NULL)
-    {
-      MenuMonitorEventInfo *event_info = tmp->data;
+  while (tmp != NULL) {
+    MenuMonitorEventInfo* event_info = tmp->data;
 
-      invoke_notifies (event_info->monitor,
-		       event_info->event,
-		       event_info->path);
+    invoke_notifies(event_info->monitor, event_info->event, event_info->path);
 
-      menu_monitor_unref (event_info->monitor);
-      event_info->monitor = NULL;
+    menu_monitor_unref(event_info->monitor);
+    event_info->monitor = NULL;
 
-      g_free (event_info->path);
-      event_info->path = NULL;
+    g_free(event_info->path);
+    event_info->path = NULL;
 
-      event_info->event = MENU_MONITOR_EVENT_INVALID;
+    event_info->event = MENU_MONITOR_EVENT_INVALID;
 
-      g_free (event_info);
+    g_free(event_info);
 
-      tmp = tmp->next;
-    }
+    tmp = tmp->next;
+  }
 
-  g_slist_free (events_to_emit);
+  g_slist_free(events_to_emit);
 
   return FALSE;
 }
 
-static void menu_monitor_queue_event(MenuMonitorEventInfo* event_info)
-{
-  pending_events = g_slist_append (pending_events, event_info);
+static void menu_monitor_queue_event(MenuMonitorEventInfo* event_info) {
+  pending_events = g_slist_append(pending_events, event_info);
 
-  if (events_idle_handler == 0)
-    {
-      events_idle_handler = g_idle_add ((GSourceFunc) emit_events_in_idle, NULL);
-    }
+  if (events_idle_handler == 0) {
+    events_idle_handler = g_idle_add((GSourceFunc)emit_events_in_idle, NULL);
+  }
 }
 
-static inline char* get_registry_key(const char* path, gboolean is_directory)
-{
-  return g_strdup_printf ("%s:%s",
-			  path,
-			  is_directory ? "<dir>" : "<file>");
+static inline char* get_registry_key(const char* path, gboolean is_directory) {
+  return g_strdup_printf("%s:%s", path, is_directory ? "<dir>" : "<file>");
 }
 
-static gboolean monitor_callback (GFileMonitor* monitor, GFile* child, GFile* other_file, GFileMonitorEvent eflags, gpointer user_data)
-{
-  MenuMonitorEventInfo *event_info;
-  MenuMonitorEvent      event;
-  MenuMonitor          *menu_monitor = (MenuMonitor *) user_data;
+static gboolean monitor_callback(GFileMonitor* monitor, GFile* child,
+                                 GFile* other_file, GFileMonitorEvent eflags,
+                                 gpointer user_data) {
+  MenuMonitorEventInfo* event_info;
+  MenuMonitorEvent event;
+  MenuMonitor* menu_monitor = (MenuMonitor*)user_data;
 
   event = MENU_MONITOR_EVENT_INVALID;
-  switch (eflags)
-    {
+  switch (eflags) {
     case G_FILE_MONITOR_EVENT_CHANGED:
       event = MENU_MONITOR_EVENT_CHANGED;
       break;
@@ -172,261 +161,235 @@ static gboolean monitor_callback (GFileMonitor* monitor, GFile* child, GFile* ot
       break;
     default:
       return TRUE;
-    }
+  }
 
-  event_info = g_new0 (MenuMonitorEventInfo, 1);
+  event_info = g_new0(MenuMonitorEventInfo, 1);
 
-  event_info->path    = g_file_get_path (child);
-  event_info->event   = event;
+  event_info->path = g_file_get_path(child);
+  event_info->event = event;
   event_info->monitor = menu_monitor;
 
-  menu_monitor_queue_event (event_info);
+  menu_monitor_queue_event(event_info);
 
   return TRUE;
 }
 
-static MenuMonitor* register_monitor(const char* path, gboolean is_directory)
-{
-  MenuMonitor     *retval;
-  GFile           *file;
+static MenuMonitor* register_monitor(const char* path, gboolean is_directory) {
+  MenuMonitor* retval;
+  GFile* file;
 
-  retval = g_new0 (MenuMonitor, 1);
+  retval = g_new0(MenuMonitor, 1);
 
-  retval->path         = g_strdup (path);
-  retval->refcount     = 1;
+  retval->path = g_strdup(path);
+  retval->refcount = 1;
   retval->is_directory = is_directory != FALSE;
 
-  file = g_file_new_for_path (retval->path);
+  file = g_file_new_for_path(retval->path);
 
-  if (file == NULL)
-    {
-      menu_verbose ("Not adding monitor on '%s', failed to create GFile\n",
-                    retval->path);
-      return retval;
-    }
+  if (file == NULL) {
+    menu_verbose("Not adding monitor on '%s', failed to create GFile\n",
+                 retval->path);
+    return retval;
+  }
 
   if (retval->is_directory)
-      retval->monitor = g_file_monitor_directory (file, G_FILE_MONITOR_NONE,
-                                                  NULL, NULL);
+    retval->monitor =
+        g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, NULL);
   else
-      retval->monitor = g_file_monitor_file (file, G_FILE_MONITOR_NONE,
-                                             NULL, NULL);
+    retval->monitor =
+        g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, NULL);
 
-  g_object_unref (G_OBJECT (file));
+  g_object_unref(G_OBJECT(file));
 
-  if (retval->monitor == NULL)
-    {
-      menu_verbose ("Not adding monitor on '%s', failed to create monitor\n",
-                    retval->path);
-      return retval;
-    }
+  if (retval->monitor == NULL) {
+    menu_verbose("Not adding monitor on '%s', failed to create monitor\n",
+                 retval->path);
+    return retval;
+  }
 
-  g_signal_connect (retval->monitor, "changed",
-                    G_CALLBACK (monitor_callback), retval);
+  g_signal_connect(retval->monitor, "changed", G_CALLBACK(monitor_callback),
+                   retval);
 
   return retval;
 }
 
-static MenuMonitor* lookup_monitor(const char* path, gboolean is_directory)
-{
-  MenuMonitor *retval;
-  char        *registry_key;
+static MenuMonitor* lookup_monitor(const char* path, gboolean is_directory) {
+  MenuMonitor* retval;
+  char* registry_key;
 
   retval = NULL;
 
-  registry_key = get_registry_key (path, is_directory);
+  registry_key = get_registry_key(path, is_directory);
 
-  if (monitors_registry == NULL)
-    {
-      monitors_registry = g_hash_table_new_full (g_str_hash,
-						 g_str_equal,
-						 g_free,
-						 NULL);
-    }
-  else
-    {
-      retval = g_hash_table_lookup (monitors_registry, registry_key);
-    }
+  if (monitors_registry == NULL) {
+    monitors_registry =
+        g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+  } else {
+    retval = g_hash_table_lookup(monitors_registry, registry_key);
+  }
 
-  if (retval == NULL)
-    {
-      retval = register_monitor (path, is_directory);
-      g_hash_table_insert (monitors_registry, registry_key, retval);
+  if (retval == NULL) {
+    retval = register_monitor(path, is_directory);
+    g_hash_table_insert(monitors_registry, registry_key, retval);
 
-      return retval;
-    }
-  else
-    {
-      g_free (registry_key);
+    return retval;
+  } else {
+    g_free(registry_key);
 
-      return mate_menu_monitor_ref(retval);
-    }
+    return mate_menu_monitor_ref(retval);
+  }
 }
 
-MenuMonitor* mate_menu_monitor_file_get(const char* path)
-{
-	g_return_val_if_fail(path != NULL, NULL);
+MenuMonitor* mate_menu_monitor_file_get(const char* path) {
+  g_return_val_if_fail(path != NULL, NULL);
 
-	return lookup_monitor(path, FALSE);
+  return lookup_monitor(path, FALSE);
 }
 
-MenuMonitor* menu_get_directory_monitor(const char* path)
-{
-  g_return_val_if_fail (path != NULL, NULL);
+MenuMonitor* menu_get_directory_monitor(const char* path) {
+  g_return_val_if_fail(path != NULL, NULL);
 
-  return lookup_monitor (path, TRUE);
+  return lookup_monitor(path, TRUE);
 }
 
-MenuMonitor* mate_menu_monitor_ref(MenuMonitor* monitor)
-{
-	g_return_val_if_fail(monitor != NULL, NULL);
-	g_return_val_if_fail(monitor->refcount > 0, NULL);
+MenuMonitor* mate_menu_monitor_ref(MenuMonitor* monitor) {
+  g_return_val_if_fail(monitor != NULL, NULL);
+  g_return_val_if_fail(monitor->refcount > 0, NULL);
 
-	monitor->refcount++;
+  monitor->refcount++;
 
-	return monitor;
+  return monitor;
 }
 
-static void menu_monitor_clear_pending_events(MenuMonitor* monitor)
-{
-  GSList *tmp;
+static void menu_monitor_clear_pending_events(MenuMonitor* monitor) {
+  GSList* tmp;
 
   tmp = pending_events;
-  while (tmp != NULL)
-    {
-      MenuMonitorEventInfo *event_info = tmp->data;
-      GSList               *next = tmp->next;
+  while (tmp != NULL) {
+    MenuMonitorEventInfo* event_info = tmp->data;
+    GSList* next = tmp->next;
 
-      if (event_info->monitor == monitor)
-	{
-	  pending_events = g_slist_delete_link (pending_events, tmp);
+    if (event_info->monitor == monitor) {
+      pending_events = g_slist_delete_link(pending_events, tmp);
 
-	  g_free (event_info->path);
-	  event_info->path = NULL;
+      g_free(event_info->path);
+      event_info->path = NULL;
 
-	  event_info->monitor = NULL;
-	  event_info->event   = MENU_MONITOR_EVENT_INVALID;
+      event_info->monitor = NULL;
+      event_info->event = MENU_MONITOR_EVENT_INVALID;
 
-	  g_free (event_info);
-	}
-
-      tmp = next;
+      g_free(event_info);
     }
+
+    tmp = next;
+  }
 }
 
-void menu_monitor_unref(MenuMonitor* monitor)
-{
-  char *registry_key;
+void menu_monitor_unref(MenuMonitor* monitor) {
+  char* registry_key;
 
-  g_return_if_fail (monitor != NULL);
-  g_return_if_fail (monitor->refcount > 0);
+  g_return_if_fail(monitor != NULL);
+  g_return_if_fail(monitor->refcount > 0);
 
-  if (--monitor->refcount > 0)
-    return;
+  if (--monitor->refcount > 0) return;
 
-  registry_key = get_registry_key (monitor->path, monitor->is_directory);
-  g_hash_table_remove (monitors_registry, registry_key);
-  g_free (registry_key);
+  registry_key = get_registry_key(monitor->path, monitor->is_directory);
+  g_hash_table_remove(monitors_registry, registry_key);
+  g_free(registry_key);
 
-  if (g_hash_table_size (monitors_registry) == 0)
-    {
-      g_hash_table_destroy (monitors_registry);
-      monitors_registry = NULL;
-    }
+  if (g_hash_table_size(monitors_registry) == 0) {
+    g_hash_table_destroy(monitors_registry);
+    monitors_registry = NULL;
+  }
 
-  if (monitor->monitor)
-    {
-      g_file_monitor_cancel (monitor->monitor);
-      g_object_unref (monitor->monitor);
-      monitor->monitor = NULL;
-    }
+  if (monitor->monitor) {
+    g_file_monitor_cancel(monitor->monitor);
+    g_object_unref(monitor->monitor);
+    monitor->monitor = NULL;
+  }
 
-  g_slist_foreach (monitor->notifies, (GFunc) mate_menu_monitor_notify_unref, NULL);
-  g_slist_free (monitor->notifies);
+  g_slist_foreach(monitor->notifies, (GFunc)mate_menu_monitor_notify_unref,
+                  NULL);
+  g_slist_free(monitor->notifies);
   monitor->notifies = NULL;
 
-  menu_monitor_clear_pending_events (monitor);
+  menu_monitor_clear_pending_events(monitor);
 
-  g_free (monitor->path);
+  g_free(monitor->path);
   monitor->path = NULL;
 
-  g_free (monitor);
+  g_free(monitor);
 }
 
-static MenuMonitorNotify* mate_menu_monitor_notify_ref(MenuMonitorNotify* notify)
-{
-	g_return_val_if_fail(notify != NULL, NULL);
-	g_return_val_if_fail(notify->refcount > 0, NULL);
+static MenuMonitorNotify* mate_menu_monitor_notify_ref(
+    MenuMonitorNotify* notify) {
+  g_return_val_if_fail(notify != NULL, NULL);
+  g_return_val_if_fail(notify->refcount > 0, NULL);
 
-	notify->refcount++;
+  notify->refcount++;
 
-	return notify;
+  return notify;
 }
 
-static void mate_menu_monitor_notify_unref(MenuMonitorNotify* notify)
-{
-	g_return_if_fail(notify != NULL);
-	g_return_if_fail(notify->refcount > 0);
+static void mate_menu_monitor_notify_unref(MenuMonitorNotify* notify) {
+  g_return_if_fail(notify != NULL);
+  g_return_if_fail(notify->refcount > 0);
 
-	if (--notify->refcount > 0)
-	{
-		return;
-	}
+  if (--notify->refcount > 0) {
+    return;
+  }
 
-	g_free(notify);
+  g_free(notify);
 }
 
-void menu_monitor_add_notify(MenuMonitor* monitor, MenuMonitorNotifyFunc notify_func, gpointer user_data)
-{
-	MenuMonitorNotify* notify;
+void menu_monitor_add_notify(MenuMonitor* monitor,
+                             MenuMonitorNotifyFunc notify_func,
+                             gpointer user_data) {
+  MenuMonitorNotify* notify;
 
-	g_return_if_fail(monitor != NULL);
-	g_return_if_fail(notify_func != NULL);
+  g_return_if_fail(monitor != NULL);
+  g_return_if_fail(notify_func != NULL);
 
-	GSList* tmp = monitor->notifies;
+  GSList* tmp = monitor->notifies;
 
-	while (tmp != NULL)
-	{
-		notify = tmp->data;
+  while (tmp != NULL) {
+    notify = tmp->data;
 
-		if (notify->notify_func == notify_func && notify->user_data == user_data)
-		{
-			break;
-		}
+    if (notify->notify_func == notify_func && notify->user_data == user_data) {
+      break;
+    }
 
-		tmp = tmp->next;
-	}
+    tmp = tmp->next;
+  }
 
-	if (tmp == NULL)
-	{
-		notify = g_new0(MenuMonitorNotify, 1);
-		notify->notify_func = notify_func;
-		notify->user_data = user_data;
-		notify->refcount = 1;
+  if (tmp == NULL) {
+    notify = g_new0(MenuMonitorNotify, 1);
+    notify->notify_func = notify_func;
+    notify->user_data = user_data;
+    notify->refcount = 1;
 
-		monitor->notifies = g_slist_append(monitor->notifies, notify);
-	}
+    monitor->notifies = g_slist_append(monitor->notifies, notify);
+  }
 }
 
-void mate_menu_monitor_notify_remove(MenuMonitor* monitor, MenuMonitorNotifyFunc notify_func, gpointer user_data)
-{
-	GSList* tmp = monitor->notifies;
+void mate_menu_monitor_notify_remove(MenuMonitor* monitor,
+                                     MenuMonitorNotifyFunc notify_func,
+                                     gpointer user_data) {
+  GSList* tmp = monitor->notifies;
 
-	while (tmp != NULL)
-	{
-		MenuMonitorNotify* notify = tmp->data;
-		GSList* next = tmp->next;
+  while (tmp != NULL) {
+    MenuMonitorNotify* notify = tmp->data;
+    GSList* next = tmp->next;
 
-		if (notify->notify_func == notify_func && notify->user_data == user_data)
-		{
-			notify->notify_func = NULL;
-			notify->user_data = NULL;
+    if (notify->notify_func == notify_func && notify->user_data == user_data) {
+      notify->notify_func = NULL;
+      notify->user_data = NULL;
 
-			mate_menu_monitor_notify_unref(notify);
+      mate_menu_monitor_notify_unref(notify);
 
-			monitor->notifies = g_slist_delete_link(monitor->notifies, tmp);
-		}
+      monitor->notifies = g_slist_delete_link(monitor->notifies, tmp);
+    }
 
-		tmp = next;
-	}
+    tmp = next;
+  }
 }

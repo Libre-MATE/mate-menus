@@ -26,9 +26,9 @@
 G_BEGIN_DECLS
 
 typedef enum {
-	DESKTOP_ENTRY_INVALID = 0,
-	DESKTOP_ENTRY_DESKTOP,
-	DESKTOP_ENTRY_DIRECTORY
+  DESKTOP_ENTRY_INVALID = 0,
+  DESKTOP_ENTRY_DESKTOP,
+  DESKTOP_ENTRY_DIRECTORY
 } DesktopEntryType;
 
 typedef struct DesktopEntry DesktopEntry;
@@ -40,22 +40,21 @@ DesktopEntry* desktop_entry_copy(DesktopEntry* entry);
 DesktopEntry* desktop_entry_reload(DesktopEntry* entry);
 void desktop_entry_unref(DesktopEntry* entry);
 
-DesktopEntryType  desktop_entry_get_type     (DesktopEntry *entry);
-const char       *desktop_entry_get_path     (DesktopEntry *entry);
-const char       *desktop_entry_get_basename (DesktopEntry *entry);
-const char       *desktop_entry_get_name     (DesktopEntry *entry);
-const char       *desktop_entry_get_generic_name (DesktopEntry *entry);
-const char       *desktop_entry_get_comment  (DesktopEntry *entry);
-GIcon            *desktop_entry_get_icon     (DesktopEntry *entry);
-gboolean          desktop_entry_get_hidden   (DesktopEntry *entry);
-gboolean          desktop_entry_get_no_display (DesktopEntry *entry);
-gboolean          desktop_entry_get_show_in  (DesktopEntry *entry);
+DesktopEntryType desktop_entry_get_type(DesktopEntry* entry);
+const char* desktop_entry_get_path(DesktopEntry* entry);
+const char* desktop_entry_get_basename(DesktopEntry* entry);
+const char* desktop_entry_get_name(DesktopEntry* entry);
+const char* desktop_entry_get_generic_name(DesktopEntry* entry);
+const char* desktop_entry_get_comment(DesktopEntry* entry);
+GIcon* desktop_entry_get_icon(DesktopEntry* entry);
+gboolean desktop_entry_get_hidden(DesktopEntry* entry);
+gboolean desktop_entry_get_no_display(DesktopEntry* entry);
+gboolean desktop_entry_get_show_in(DesktopEntry* entry);
 
 /* Only valid for DESKTOP_ENTRY_DESKTOP */
-GDesktopAppInfo  *desktop_entry_get_app_info (DesktopEntry *entry);
-gboolean desktop_entry_has_categories (DesktopEntry *entry);
-gboolean desktop_entry_has_category   (DesktopEntry *entry,
-                                       const char   *category);
+GDesktopAppInfo* desktop_entry_get_app_info(DesktopEntry* entry);
+gboolean desktop_entry_has_categories(DesktopEntry* entry);
+gboolean desktop_entry_has_category(DesktopEntry* entry, const char* category);
 
 void desktop_entry_add_legacy_category(DesktopEntry* src);
 
@@ -65,18 +64,25 @@ DesktopEntrySet* desktop_entry_set_new(void);
 DesktopEntrySet* desktop_entry_set_ref(DesktopEntrySet* set);
 void desktop_entry_set_unref(DesktopEntrySet* set);
 
-void desktop_entry_set_add_entry(DesktopEntrySet* set, DesktopEntry* entry, const char* file_id);
-DesktopEntry* desktop_entry_set_lookup(DesktopEntrySet* set, const char* file_id);
-guint desktop_entry_set_get_count (DesktopEntrySet *set);
+void desktop_entry_set_add_entry(DesktopEntrySet* set, DesktopEntry* entry,
+                                 const char* file_id);
+DesktopEntry* desktop_entry_set_lookup(DesktopEntrySet* set,
+                                       const char* file_id);
+guint desktop_entry_set_get_count(DesktopEntrySet* set);
 
 void desktop_entry_set_union(DesktopEntrySet* set, DesktopEntrySet* with);
-void desktop_entry_set_intersection(DesktopEntrySet* set, DesktopEntrySet* with);
+void desktop_entry_set_intersection(DesktopEntrySet* set,
+                                    DesktopEntrySet* with);
 void desktop_entry_set_subtract(DesktopEntrySet* set, DesktopEntrySet* other);
 void desktop_entry_set_swap_contents(DesktopEntrySet* a, DesktopEntrySet* b);
 
-typedef void (*DesktopEntrySetForeachFunc) (const char* file_id, DesktopEntry* entry, gpointer user_data);
+typedef void (*DesktopEntrySetForeachFunc)(const char* file_id,
+                                           DesktopEntry* entry,
+                                           gpointer user_data);
 
-void desktop_entry_set_foreach(DesktopEntrySet* set, DesktopEntrySetForeachFunc func, gpointer user_data);
+void desktop_entry_set_foreach(DesktopEntrySet* set,
+                               DesktopEntrySetForeachFunc func,
+                               gpointer user_data);
 
 G_END_DECLS
 

@@ -29,7 +29,6 @@
 
 G_BEGIN_DECLS
 
-
 #ifdef G_ENABLE_DEBUG
 
 void menu_verbose(const char* format, ...) G_GNUC_PRINTF(1, 2);
