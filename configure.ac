@@ -1,6 +1,11 @@
 AC_PREREQ(2.62)
 
-AC_INIT([mate-menus], [1.26.0], [https://mate-desktop.org])
+AC_INIT([mate-menus],
+        [1.26.0],
+        [https://github.com/Libre-MATE/mate-menus/issues],
+        [mate-menus],
+        [https://github.com/Libre-MATE/mate-menus/])
+
 AC_CONFIG_SRCDIR(libmenu/matemenu-tree.h)
 
 AM_INIT_AUTOMAKE([1.9 foreign no-dist-gzip dist-xz check-news])
