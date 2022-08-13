@@ -4,9 +4,8 @@ AC_INIT([mate-menus],
         [mate-menus],
         [https://github.com/Libre-MATE/mate-menus/])
 AC_PREREQ(2.62)
-
+AC_COPYRIGHT([Copyright (C) 2022 Libre MATE])
 AC_CONFIG_SRCDIR(libmenu/matemenu-tree.h)
-
 AM_INIT_AUTOMAKE([1.9 foreign no-dist-gzip dist-xz check-news])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CONFIG_MACRO_DIR([m4])
