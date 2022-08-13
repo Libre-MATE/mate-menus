@@ -46,7 +46,7 @@ AC_SUBST(GIO_UNIX_CFLAGS)
 AC_SUBST(GIO_UNIX_LIBS)
 
 AC_ARG_ENABLE(collection,
-  AC_HELP_STRING([--enable-collection],
+  AS_HELP_STRING([--enable-collection],
                  [enable collection menu entry]),,
   enable_collection=yes)
 
@@ -55,7 +55,7 @@ if test x$enable_collection = xyes; then
 fi
 
 AC_ARG_ENABLE(deprecation_flags,
-              [AC_HELP_STRING([--enable-deprecation-flags],
+              [AS_HELP_STRING([--enable-deprecation-flags],
                               [use *_DISABLE_DEPRECATED flags @<:@default=no@:>@])],,
               [enable_deprecation_flags=no])
 
