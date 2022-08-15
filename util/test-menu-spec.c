@@ -48,7 +48,7 @@ static GOptionEntry options[] = {
      N_("Include NoDisplay=true entries"), NULL},
     {"include-unallocated", 'u', 0, G_OPTION_ARG_NONE, &include_unallocated,
      N_("Include unallocated entries"), NULL},
-    {NULL}};
+    {NULL, '\0', 0, G_OPTION_ARG_NONE, NULL, NULL, NULL}};
 
 static void append_directory_path(MateMenuTreeDirectory *directory,
                                   GString *path) {
