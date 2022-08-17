@@ -63,7 +63,7 @@ AC_SUBST(GIO_UNIX_LIBS)
 AC_ARG_ENABLE(collection,
   AS_HELP_STRING([--enable-collection],
                  [enable collection menu entry]),,
-  enable_collection=yes)
+  enable_collection=no)
 
 if test x$enable_collection = xyes; then
     AC_DEFINE(WITH_COLLECTION,1,[Build with collection menu entry support])
