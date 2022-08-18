@@ -148,7 +148,6 @@ static gboolean monitor_callback(GFileMonitor* monitor, GFile* child,
   MenuMonitorEvent event;
   MenuMonitor* menu_monitor = (MenuMonitor*)user_data;
 
-  event = MENU_MONITOR_EVENT_INVALID;
   switch (eflags) {
     case G_FILE_MONITOR_EVENT_CHANGED:
       event = MENU_MONITOR_EVENT_CHANGED;
