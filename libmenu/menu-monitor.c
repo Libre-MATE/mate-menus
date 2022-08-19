@@ -87,9 +87,10 @@ static void invoke_notifies(MenuMonitor* monitor, MenuMonitorEvent event,
   g_slist_free(copy);
 }
 
-static gboolean emit_events_in_idle(void) {
+static gboolean emit_events_in_idle(gpointer data) {
   GSList* events_to_emit;
   GSList* tmp;
+  (void) data;
 
   events_to_emit = pending_events;
 
