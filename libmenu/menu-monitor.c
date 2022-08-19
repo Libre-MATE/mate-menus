@@ -306,9 +306,7 @@ void menu_monitor_unref(MenuMonitor* monitor) {
     monitor->monitor = NULL;
   }
 
-  g_slist_foreach(monitor->notifies, (GFunc)mate_menu_monitor_notify_unref,
-                  NULL);
-  g_slist_free(monitor->notifies);
+  g_slist_free_full(monitor->notifies, (GDestroyNotify)mate_menu_monitor_notify_unref);
   monitor->notifies = NULL;
 
   menu_monitor_clear_pending_events(monitor);

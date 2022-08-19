@@ -210,8 +210,7 @@ void menu_layout_node_unref(MenuLayoutNode *node) {
     } else if (node->type == MENU_LAYOUT_NODE_ROOT) {
       MenuLayoutNodeRoot *nr = (MenuLayoutNodeRoot *)node;
 
-      g_slist_foreach(nr->monitors, (GFunc)g_free, NULL);
-      g_slist_free(nr->monitors);
+      g_slist_free_full(nr->monitors, g_free);
 
       if (nr->monitors_idle_handler != NULL)
         g_source_destroy(nr->monitors_idle_handler);

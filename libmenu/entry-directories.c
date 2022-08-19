@@ -129,16 +129,13 @@ static void cached_dir_free(CachedDir* dir) {
     dir->dir_monitor = NULL;
   }
 
-  g_slist_foreach(dir->monitors, (GFunc)g_free, NULL);
-  g_slist_free(dir->monitors);
+  g_slist_free_full (dir->monitors, g_free);
   dir->monitors = NULL;
 
-  g_slist_foreach(dir->entries, (GFunc)desktop_entry_unref, NULL);
-  g_slist_free(dir->entries);
+  g_slist_free_full(dir->entries, (GDestroyNotify) desktop_entry_unref);
   dir->entries = NULL;
 
-  g_slist_foreach(dir->subdirs, (GFunc)cached_dir_unref_noparent, NULL);
-  g_slist_free(dir->subdirs);
+  g_slist_free_full(dir->subdirs, (GDestroyNotify) cached_dir_unref_noparent);
   dir->subdirs = NULL;
 
   g_free(dir->name);
@@ -913,8 +910,7 @@ void entry_directory_list_unref(EntryDirectoryList* list) {
 
   list->refcount -= 1;
   if (list->refcount == 0) {
-    g_list_foreach(list->dirs, (GFunc)entry_directory_unref, NULL);
-    g_list_free(list->dirs);
+    g_list_free_full(list->dirs, (GDestroyNotify)entry_directory_unref);
     list->dirs = NULL;
     list->length = 0;
     g_free(list);

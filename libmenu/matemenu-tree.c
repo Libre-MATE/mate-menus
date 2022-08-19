@@ -932,9 +932,7 @@ MateMenuTreeIter *matemenu_tree_iter_ref(MateMenuTreeIter *iter) {
 void matemenu_tree_iter_unref(MateMenuTreeIter *iter) {
   if (!g_atomic_int_dec_and_test(&iter->refcount)) return;
 
-  g_slist_foreach(iter->contents, (GFunc)matemenu_tree_item_unref, NULL);
-  g_slist_free(iter->contents);
-
+  g_slist_free_full(iter->contents, (GDestroyNotify)matemenu_tree_item_unref);
   g_slice_free(MateMenuTreeIter, iter);
 }
 
@@ -1380,28 +1378,24 @@ static MateMenuTreeDirectory *matemenu_tree_directory_new(
 static void matemenu_tree_directory_finalize(MateMenuTreeDirectory *directory) {
   g_assert(directory->item.refcount == 0);
 
-  g_slist_foreach(directory->contents,
-                  (GFunc)matemenu_tree_item_unref_and_unset_parent, NULL);
-  g_slist_free(directory->contents);
+  g_slist_free_full(directory->contents,
+                    matemenu_tree_item_unref_and_unset_parent);
   directory->contents = NULL;
 
-  g_slist_foreach(directory->default_layout_info, (GFunc)menu_layout_node_unref,
-                  NULL);
-  g_slist_free(directory->default_layout_info);
+  g_slist_free_full(directory->default_layout_info,
+                    (GDestroyNotify)menu_layout_node_unref);
   directory->default_layout_info = NULL;
 
-  g_slist_foreach(directory->layout_info, (GFunc)menu_layout_node_unref, NULL);
-  g_slist_free(directory->layout_info);
+  g_slist_free_full(directory->layout_info,
+                    (GDestroyNotify)menu_layout_node_unref);
   directory->layout_info = NULL;
 
-  g_slist_foreach(directory->subdirs,
-                  (GFunc)matemenu_tree_item_unref_and_unset_parent, NULL);
-  g_slist_free(directory->subdirs);
+  g_slist_free_full(directory->subdirs,
+                    matemenu_tree_item_unref_and_unset_parent);
   directory->subdirs = NULL;
 
-  g_slist_foreach(directory->entries,
-                  (GFunc)matemenu_tree_item_unref_and_unset_parent, NULL);
-  g_slist_free(directory->entries);
+  g_slist_free_full(directory->entries,
+                    matemenu_tree_item_unref_and_unset_parent);
   directory->entries = NULL;
 
   if (directory->directory_entry)
@@ -1714,7 +1708,6 @@ static void merge_resolved_children(MateMenuTree *tree,
         menu_layout_node_steal(from_child);
         menu_layout_node_insert_after(insert_after, from_child);
         menu_layout_node_unref(from_child);
-
         insert_after = from_child;
         break;
     }
@@ -2284,8 +2277,7 @@ static gboolean add_menu_for_legacy_dir(MenuLayoutNode *parent,
 
   desktop_entry_set_unref(desktop_entries);
 
-  g_slist_foreach(subdirs, (GFunc)g_free, NULL);
-  g_slist_free(subdirs);
+  g_slist_free_full(subdirs, g_free);
 
   return menu_added;
 }
@@ -2982,8 +2974,7 @@ static DesktopEntrySet *process_include_rules(MenuLayoutNode *layout,
 static void collect_layout_info(MenuLayoutNode *layout, GSList **layout_info) {
   MenuLayoutNode *iter;
 
-  g_slist_foreach(*layout_info, (GFunc)menu_layout_node_unref, NULL);
-  g_slist_free(*layout_info);
+  g_slist_free_full(*layout_info, (GDestroyNotify)menu_layout_node_unref);
   *layout_info = NULL;
 
   iter = menu_layout_node_get_children(layout);
@@ -3543,9 +3534,7 @@ static void preprocess_layout_info_subdir_helper(
 
       alias = matemenu_tree_alias_new(directory, subdir, item);
 
-      g_slist_foreach(list, (GFunc)matemenu_tree_item_unref_and_unset_parent,
-                      NULL);
-      g_slist_free(list);
+      g_slist_free_full(list, matemenu_tree_item_unref_and_unset_parent);
       subdir->subdirs = NULL;
       subdir->entries = NULL;
 
@@ -4060,9 +4049,8 @@ static void process_layout_info(MateMenuTree *tree,
 
   menu_verbose("Processing menu layout hints for %s\n", directory->name);
 
-  g_slist_foreach(directory->contents,
-                  (GFunc)matemenu_tree_item_unref_and_unset_parent, NULL);
-  g_slist_free(directory->contents);
+  g_slist_free_full(directory->contents,
+                    matemenu_tree_item_unref_and_unset_parent);
   directory->contents = NULL;
   directory->layout_pending_separator = FALSE;
 
@@ -4145,21 +4133,16 @@ static void process_layout_info(MateMenuTree *tree,
     }
   }
 
-  g_slist_foreach(directory->subdirs, (GFunc)matemenu_tree_item_unref, NULL);
-  g_slist_free(directory->subdirs);
+  g_slist_free_full(directory->subdirs, (GDestroyNotify)matemenu_tree_item_unref);
   directory->subdirs = NULL;
 
-  g_slist_foreach(directory->entries, (GFunc)matemenu_tree_item_unref, NULL);
-  g_slist_free(directory->entries);
+  g_slist_free_full(directory->entries, (GDestroyNotify)matemenu_tree_item_unref);
   directory->entries = NULL;
 
-  g_slist_foreach(directory->default_layout_info, (GFunc)menu_layout_node_unref,
-                  NULL);
-  g_slist_free(directory->default_layout_info);
+  g_slist_free_full(directory->default_layout_info, (GDestroyNotify)menu_layout_node_unref);
   directory->default_layout_info = NULL;
 
-  g_slist_foreach(directory->layout_info, (GFunc)menu_layout_node_unref, NULL);
-  g_slist_free(directory->layout_info);
+  g_slist_free_full(directory->layout_info, (GDestroyNotify)menu_layout_node_unref);
   directory->layout_info = NULL;
 }
 
