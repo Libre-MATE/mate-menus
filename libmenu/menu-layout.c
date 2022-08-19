@@ -925,7 +925,7 @@ void menu_layout_node_root_add_entries_monitor(
 }
 
 void menu_layout_node_root_remove_entries_monitor(
-    MenuLayoutNode *node, MenuLayoutNodeEntriesChangedFunc callback,
+    MenuLayoutNode *node, const MenuLayoutNodeEntriesChangedFunc callback,
     gpointer user_data) {
   MenuLayoutNodeRoot *nr;
   GSList *tmp;

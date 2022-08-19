@@ -260,7 +260,7 @@ MenuMonitor* mate_menu_monitor_ref(MenuMonitor* monitor) {
   return monitor;
 }
 
-static void menu_monitor_clear_pending_events(MenuMonitor* monitor) {
+static void menu_monitor_clear_pending_events(const MenuMonitor* monitor) {
   GSList* tmp;
 
   tmp = pending_events;
@@ -279,7 +279,6 @@ static void menu_monitor_clear_pending_events(MenuMonitor* monitor) {
 
       g_free(event_info);
     }
-
     tmp = next;
   }
 }

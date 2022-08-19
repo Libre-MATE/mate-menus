@@ -588,8 +588,8 @@ static void cached_dir_add_monitor(CachedDir* dir, EntryDirectory* ed,
   }
 }
 
-static void cached_dir_remove_monitor(CachedDir* dir, EntryDirectory* ed,
-                                      EntryDirectoryChangedFunc callback,
+static void cached_dir_remove_monitor(CachedDir* dir, const EntryDirectory* ed,
+                                      const EntryDirectoryChangedFunc callback,
                                       gpointer user_data) {
   GSList* tmp;
 
